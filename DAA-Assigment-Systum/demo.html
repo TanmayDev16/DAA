@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animated Graph with Axes, Green Dots, and Coordinates</title>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    svg {
+      display: block;
+      margin: auto;
+    }
+  </style>
+</head>
+<body>
+  <svg id="container"></svg>
+
+  <script>
+    // Size of SVG canvas
+    const width = 800;
+    const height = 600;
+    const margin = { top: 50, right: 50, bottom: 50, left: 50 };
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+
+    // Generate random vertices
+    const numVertices = 8;
+    const vertices = d3.range(numVertices).map(() => ({ x: Math.random() * innerWidth, y: Math.random() * innerHeight }));
+
+    // Generate random edges between vertices
+    const edges = [];
+    for (let i = 0; i < numVertices; i++) {
+      for (let j = i + 1; j < numVertices; j++) {
+        if (Math.random() < 0.3) { // Adjust probability as needed
+          edges.push({ source: i, target: j });
+        }
+      }
+    }
+
+    // Create SVG element
+    const svg = d3.select("#container")
+                  .attr("width", width)
+                  .attr("height", height);
+
+    // Create a group for the graph
+    const graphGroup = svg.append("g")
+                          .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Draw edges
+    const edgeSelection = graphGroup.selectAll("line")
+                                    .data(edges)
+                                    .enter()
+                                    .append("line")
+                                    .attr("stroke", "black")
+                                    .attr("stroke-width", 2) // Set line thickness
+                                    .attr("opacity", 0); // Initially set opacity to 0 for animation
+
+    // Draw vertices
+    const vertexSelection = graphGroup.selectAll("circle")
+                                      .data(vertices)
+                                      .enter()
+                                      .append("circle")
+                                      .attr("cx", d => d.x)
+                                      .attr("cy", d => d.y)
+                                      .attr("r", 5)
+                                      .attr("fill", "green");
+
+    // Display vertex coordinates
+    const textSelection = graphGroup.selectAll("text")
+                                    .data(vertices)
+                                    .enter()
+                                    .append("text")
+                                    .attr("x", d => d.x + 7) // Adjust position as needed
+                                    .attr("y", d => d.y - 7) // Adjust position as needed
+                                    .text(d => `(${d.x.toFixed(2)}, ${d.y.toFixed(2)})`);
+
+    // Function to animate the graph
+    function animateGraph() {
+      edgeSelection.transition()
+                   .duration(2000)
+                   .attr("opacity", 1) // Set opacity to 1 for visibility
+                   .delay((d, i) => i * 500) // Delay each edge animation
+                   .attr("x1", d => vertices[d.source].x)
+                   .attr("y1", d => vertices[d.source].y)
+                   .attr("x2", d => vertices[d.source].x) // Start from source
+                   .attr("y2", d => vertices[d.source].y) // Start from source
+                   .transition()
+                   .duration(2000)
+                   .attr("x2", d => vertices[d.target].x) // Move to target
+                   .attr("y2", d => vertices[d.target].y); // Move to target
+    }
+
+    // Call the animate function
+    animateGraph();
+
+    // Create x and y axes
+    const xAxis = d3.axisBottom().scale(d3.scaleLinear().domain([0, innerWidth]).range([0, innerWidth]));
+    const yAxis = d3.axisLeft().scale(d3.scaleLinear().domain([0, innerHeight]).range([innerHeight, 0]));
+
+    // Append x axis
+    graphGroup.append("g")
+             .attr("transform", `translate(0, ${innerHeight})`)
+             .call(xAxis);
+
+    // Append y axis
+    graphGroup.append("g")
+             .call(yAxis);
+  </script>
+</body>
+</html>
